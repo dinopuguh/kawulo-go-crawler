@@ -1,1 +1,1 @@
-tripadvisor-crawler
+kawulo-go-crawler

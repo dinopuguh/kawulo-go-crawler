@@ -4,23 +4,20 @@ import (
 	"log"
 	"time"
 
-	"github.com/dinopuguh/tripadvisor-crawler/api"
-	"github.com/dinopuguh/tripadvisor-crawler/database"
-	"github.com/dinopuguh/tripadvisor-crawler/models"
+	"github.com/dinopuguh/kawulo-go-crawler/api"
+	"github.com/dinopuguh/kawulo-go-crawler/database"
+	"github.com/dinopuguh/kawulo-go-crawler/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func FindAllReviews() ([]models.Review, error) {
+func FindAllReviews(db *mongo.Database) ([]models.Review, error) {
 	ctx := database.Ctx
-	db, err := database.Connect()
-	if err != nil {
-		return nil, err
-	}
 
 	crs, err := db.Collection("review").Find(ctx, bson.M{})
 	if err != nil {
-		return nil, err
+		log.Fatal(err.Error())
 	}
 	defer crs.Close(ctx)
 
@@ -29,7 +26,7 @@ func FindAllReviews() ([]models.Review, error) {
 		var row models.Review
 		err := crs.Decode(&row)
 		if err != nil {
-			return nil, err
+			log.Fatal(err.Error())
 		}
 
 		result = append(result, row)
@@ -38,15 +35,12 @@ func FindAllReviews() ([]models.Review, error) {
 	return result, nil
 }
 
-func ReviewExist(rev_id string) (bool, error) {
+func ReviewExist(db *mongo.Database, rev_id string) (bool, error) {
 	ctx := database.Ctx
-	db, err := database.Connect()
-	if err != nil {
-		return false, err
-	}
+
 	var result models.Review
 
-	err = db.Collection("review").FindOne(ctx, bson.D{primitive.E{Key: "id", Value: rev_id}}).Decode(&result)
+	err := db.Collection("review").FindOne(ctx, bson.D{primitive.E{Key: "id", Value: rev_id}}).Decode(&result)
 	if err != nil {
 		return false, err
 	}
@@ -54,23 +48,14 @@ func ReviewExist(rev_id string) (bool, error) {
 	return true, nil
 }
 
-func InsertReview(rest_id primitive.ObjectID, rev api.Review) error {
+func InsertReview(db *mongo.Database, rest_id primitive.ObjectID, rev api.Review) error {
 	ctx := database.Ctx
-	db, err := database.Connect()
-	if err != nil {
-		return err
-	}
 
 	var newRev models.Review
 	var newSubratings []models.Subrating
 
 	for _, s := range rev.Subratings {
-		var newSubrating models.Subrating
-
-		newSubrating.Name = s.Name
-		newSubrating.Value = s.Value
-
-		newSubratings = append(newSubratings, newSubrating)
+		newSubratings = append(newSubratings, models.Subrating(s))
 	}
 
 	newRev.ID = primitive.NewObjectID()
@@ -86,36 +71,37 @@ func InsertReview(rest_id primitive.ObjectID, rev api.Review) error {
 
 	crs, err := db.Collection("review").InsertOne(ctx, newRev)
 	if err != nil {
-		return err
+		log.Fatal(err.Error())
 	}
 
 	log.Println("Insert review success -", crs.InsertedID)
+
 	return nil
 }
 
-func InsertReviews(rest models.Restaurant) error {
+func InsertReviews(db *mongo.Database, rest models.Restaurant) error {
 	url := api.LocationUrl + rest.LocationId + "/reviews"
 
 	for {
 		log.Println("<--- *** --->")
 		res, err := api.FetchReviews(url)
 		if err != nil {
-			return err
+			log.Fatal(err.Error())
 		}
 
 		revs := res.Data
 		pag := res.Paging
 
 		for _, rev := range revs {
-			exist, _ := ReviewExist(rev.ReviewId)
+			exist, _ := ReviewExist(db, rev.ReviewId)
 			if exist == true {
 				log.Println("Review with id", rev.ReviewId, "is already exist")
 				continue
 			}
 
-			err = InsertReview(rest.ID, rev)
+			err = InsertReview(db, rest.ID, rev)
 			if err != nil {
-				return err
+				log.Fatal(err.Error())
 			}
 			log.Println(rev.ReviewId)
 		}

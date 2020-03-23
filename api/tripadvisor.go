@@ -2,9 +2,13 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 var (
@@ -39,6 +43,11 @@ type Paging struct {
 }
 
 func FetchRestaurants(url string) (RestaurantResponse, error) {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	client := &http.Client{
 		Transport: transport,
 	}
@@ -49,7 +58,7 @@ func FetchRestaurants(url string) (RestaurantResponse, error) {
 	if err != nil {
 		return data, err
 	}
-	req.Header.Add("X-TripAdvisor-API-Key", "3c7beec8-846d-4377-be03-71cae6145fdc")
+	req.Header.Add("X-TripAdvisor-API-Key", os.Getenv("TRIPADVISOR_API_KEY"))
 	req.Close = true
 
 	res, err := client.Do(req)
@@ -67,6 +76,11 @@ func FetchRestaurants(url string) (RestaurantResponse, error) {
 }
 
 func FetchReviews(url string) (ReviewResponse, error) {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	client := &http.Client{
 		Transport: transport,
 	}
@@ -77,7 +91,7 @@ func FetchReviews(url string) (ReviewResponse, error) {
 	if err != nil {
 		return data, err
 	}
-	req.Header.Add("X-TripAdvisor-API-Key", "3c7beec8-846d-4377-be03-71cae6145fdc")
+	req.Header.Add("X-TripAdvisor-API-Key", os.Getenv("TRIPADVISOR_API_KEY"))
 	req.Close = true
 
 	res, err := client.Do(req)

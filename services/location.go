@@ -3,22 +3,19 @@ package services
 import (
 	"log"
 
-	"github.com/dinopuguh/tripadvisor-crawler/database"
-	"github.com/dinopuguh/tripadvisor-crawler/models"
+	"github.com/dinopuguh/kawulo-go-crawler/database"
+	"github.com/dinopuguh/kawulo-go-crawler/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func FindAllLocations() ([]models.Location, error) {
+func FindAllLocations(db *mongo.Database) ([]models.Location, error) {
 	ctx := database.Ctx
-	db, err := database.Connect()
-	if err != nil {
-		return nil, err
-	}
 
 	csr, err := db.Collection("location").Find(ctx, bson.M{})
 	if err != nil {
-		return nil, err
+		log.Fatal(err.Error())
 	}
 	defer csr.Close(ctx)
 
@@ -27,7 +24,7 @@ func FindAllLocations() ([]models.Location, error) {
 		var row models.Location
 		err := csr.Decode(&row)
 		if err != nil {
-			return nil, err
+			log.Fatal(err.Error())
 		}
 
 		result = append(result, row)
@@ -36,23 +33,19 @@ func FindAllLocations() ([]models.Location, error) {
 	return result, nil
 }
 
-func FindIndonesianLocations() ([]models.Location, error) {
+func FindIndonesianLocations(db *mongo.Database) ([]models.Location, error) {
 	ctx := database.Ctx
-	db, err := database.Connect()
-	if err != nil {
-		return nil, err
-	}
 
 	cities := []string{
-		// "Banda Aceh",
-		// "Medan",
-		// "Padang",
-		// "Pekanbaru",
-		// "Palembang",
-		// "Bengkulu",
-		// "Bandar Lampung",
-		// "Pangkal Pinang",
-		// "Tanjung Pinang",
+		"Banda Aceh",
+		"Medan",
+		"Padang",
+		"Pekanbaru",
+		"Palembang",
+		"Bengkulu",
+		"Bandar Lampung",
+		"Pangkal Pinang",
+		"Tanjung Pinang",
 		"Jakarta",
 		"Bandung",
 		"Semarang",
@@ -81,7 +74,7 @@ func FindIndonesianLocations() ([]models.Location, error) {
 	for _, city := range cities {
 		csr, err := db.Collection("location").Find(ctx, bson.M{"name": city})
 		if err != nil {
-			return nil, err
+			log.Fatal(err.Error())
 		}
 		defer csr.Close(ctx)
 
@@ -89,7 +82,7 @@ func FindIndonesianLocations() ([]models.Location, error) {
 			var row models.Location
 			err := csr.Decode(&row)
 			if err != nil {
-				return nil, err
+				log.Fatal(err.Error())
 			}
 
 			result = append(result, row)
@@ -99,19 +92,16 @@ func FindIndonesianLocations() ([]models.Location, error) {
 	return result, nil
 }
 
-func InsertLocation(loc models.Location) error {
+func InsertLocation(db *mongo.Database, loc models.Location) error {
 	ctx := database.Ctx
-	db, err := database.Connect()
-	if err != nil {
-		return err
-	}
 
 	loc.ID = primitive.NewObjectID()
 	crs, err := db.Collection("location").InsertOne(ctx, loc)
 	if err != nil {
-		return err
+		log.Fatal(err.Error())
 	}
 
 	log.Println("Insert location success -", crs.InsertedID)
+
 	return nil
 }
