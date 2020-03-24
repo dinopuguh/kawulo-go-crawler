@@ -17,11 +17,15 @@ var (
 	transport   = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
-			Timeout:   0,
-			KeepAlive: 0,
+			Timeout:   10 * time.Second,
+			KeepAlive: 10 * time.Second,
 		}).Dial,
-		TLSHandshakeTimeout: 10 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ResponseHeaderTimeout: 10 * time.Second,
+		ExpectContinueTimeout: 10 * time.Second,
 	}
+	res     *http.Response
+	retries int
 )
 
 type RestaurantResponse struct {
@@ -53,6 +57,7 @@ func FetchRestaurants(url string) (RestaurantResponse, error) {
 	}
 
 	var data RestaurantResponse
+	retries = 3
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -61,11 +66,21 @@ func FetchRestaurants(url string) (RestaurantResponse, error) {
 	req.Header.Add("X-TripAdvisor-API-Key", os.Getenv("TRIPADVISOR_API_KEY"))
 	req.Close = true
 
-	res, err := client.Do(req)
+	for retries > 0 {
+		res, err = client.Do(req)
+
+		if err != nil {
+			retries -= 1
+			log.Println("Retrying...")
+		} else {
+			defer res.Body.Close()
+			break
+		}
+	}
+
 	if err != nil {
 		return data, err
 	}
-	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&data)
 	if err != nil {
@@ -86,6 +101,7 @@ func FetchReviews(url string) (ReviewResponse, error) {
 	}
 
 	var data ReviewResponse
+	retries = 3
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -94,11 +110,21 @@ func FetchReviews(url string) (ReviewResponse, error) {
 	req.Header.Add("X-TripAdvisor-API-Key", os.Getenv("TRIPADVISOR_API_KEY"))
 	req.Close = true
 
-	res, err := client.Do(req)
+	for retries > 0 {
+		res, err = client.Do(req)
+
+		if err != nil {
+			retries -= 1
+			log.Println("Retrying...")
+		} else {
+			defer res.Body.Close()
+			break
+		}
+	}
+
 	if err != nil {
 		return data, err
 	}
-	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(&data)
 	if err != nil {
