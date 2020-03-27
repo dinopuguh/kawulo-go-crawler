@@ -35,12 +35,12 @@ func FindAllReviews(db *mongo.Database) ([]models.Review, error) {
 	return result, nil
 }
 
-func ReviewExist(db *mongo.Database, rev_id string) (bool, error) {
+func ReviewExist(db *mongo.Database, revId string) (bool, error) {
 	ctx := database.Ctx
 
 	var result models.Review
 
-	err := db.Collection("review").FindOne(ctx, bson.D{primitive.E{Key: "id", Value: rev_id}}).Decode(&result)
+	err := db.Collection("review").FindOne(ctx, bson.D{primitive.E{Key: "id", Value: revId}}).Decode(&result)
 	if err != nil {
 		return false, err
 	}
@@ -48,7 +48,7 @@ func ReviewExist(db *mongo.Database, rev_id string) (bool, error) {
 	return true, nil
 }
 
-func InsertReview(db *mongo.Database, rest_id primitive.ObjectID, rev api.Review) error {
+func InsertReview(db *mongo.Database, restId primitive.ObjectID, rev api.Review) error {
 	ctx := database.Ctx
 
 	var newRev models.Review
@@ -64,7 +64,7 @@ func InsertReview(db *mongo.Database, rest_id primitive.ObjectID, rev api.Review
 	newRev.LocationId = rev.LocationId
 	newRev.PublishedDate = rev.PublishedDate
 	newRev.Rating = rev.Rating
-	newRev.RestaurantID = rest_id
+	newRev.RestaurantID = restId
 	newRev.Subratings = newSubratings
 	newRev.Text = rev.Text
 	newRev.CreatedAt = time.Now()

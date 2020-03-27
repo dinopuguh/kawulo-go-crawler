@@ -33,7 +33,7 @@ func FindAllLocations(db *mongo.Database) ([]models.Location, error) {
 	return result, nil
 }
 
-func FindIndonesianLocations(db *mongo.Database) ([]models.Location, error) {
+func FindIndonesianLocations(db *mongo.Database) []models.Location {
 	ctx := database.Ctx
 
 	cities := []string{
@@ -89,10 +89,10 @@ func FindIndonesianLocations(db *mongo.Database) ([]models.Location, error) {
 		}
 	}
 
-	return result, nil
+	return result
 }
 
-func InsertLocation(db *mongo.Database, loc models.Location) error {
+func InsertLocation(db *mongo.Database, loc models.Location) {
 	ctx := database.Ctx
 
 	loc.ID = primitive.NewObjectID()
@@ -102,6 +102,4 @@ func InsertLocation(db *mongo.Database, loc models.Location) error {
 	}
 
 	log.Println("Insert location success -", crs.InsertedID)
-
-	return nil
 }

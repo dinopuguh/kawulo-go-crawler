@@ -31,17 +31,19 @@ func main() {
 		getReviews(db)
 		break
 	}
+
+	err = db.Client().Disconnect(database.Ctx)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 }
 
 func getRestaurants(db *mongo.Database) {
-	locs, err := services.FindIndonesianLocations(db)
-	if err != nil {
-		log.Fatal(err)
-	}
+	locs := services.FindIndonesianLocations(db)
 
 	for _, loc := range locs {
 		log.Println("<--- Location ", loc.Name, "--->")
-		err = services.InsertRestaurants(db, loc)
+		err := services.InsertRestaurants(db, loc)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
@@ -49,10 +51,7 @@ func getRestaurants(db *mongo.Database) {
 }
 
 func getReviews(db *mongo.Database) {
-	locs, err := services.FindIndonesianLocations(db)
-	if err != nil {
-		log.Fatal(err)
-	}
+	locs := services.FindIndonesianLocations(db)
 
 	for _, loc := range locs {
 		log.Println("<--- Location ", loc.Name, "--->")
