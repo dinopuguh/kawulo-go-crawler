@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func FindAllRestaurants(db *mongo.Database) ([]models.Restaurant, error) {
+func FindAllRestaurants(db *mongo.Database) []models.Restaurant {
 	ctx := database.Ctx
 
 	csr, err := db.Collection("restaurant").Find(ctx, bson.M{})
@@ -32,10 +32,10 @@ func FindAllRestaurants(db *mongo.Database) ([]models.Restaurant, error) {
 		result = append(result, row)
 	}
 
-	return result, nil
+	return result
 }
 
-func FindIndonesianRestaurants(db *mongo.Database, locId string) ([]models.Restaurant, error) {
+func FindIndonesianRestaurants(db *mongo.Database, locId string) []models.Restaurant {
 	ctx := database.Ctx
 
 	csr, err := db.Collection("restaurant").Find(ctx, bson.M{"locationID": locId})
@@ -55,58 +55,63 @@ func FindIndonesianRestaurants(db *mongo.Database, locId string) ([]models.Resta
 		result = append(result, row)
 	}
 
-	return result, nil
+	return result
 }
 
-func RestaurantExist(db *mongo.Database, locId string) (bool, error) {
+func RestaurantExist(db *mongo.Database, locId string) bool {
 	ctx := database.Ctx
 
 	var result models.Restaurant
 
 	err := db.Collection("restaurant").FindOne(ctx, bson.D{primitive.E{Key: "location_id", Value: locId}}).Decode(&result)
 	if err != nil {
-		return false, err
+		return false
 	}
 
-	return true, nil
+	return true
 }
 
-func InsertRestaurant(db *mongo.Database, loc models.Location, rest api.Restaurant) error {
+func InsertRestaurant(db *mongo.Database, loc models.Location, rest api.Restaurant) {
 	ctx := database.Ctx
 
-	var newRest models.Restaurant
 	var newSubCategory []models.SubCategory
 
 	for _, s := range rest.SubCategory {
 		newSubCategory = append(newSubCategory, models.SubCategory(s))
 	}
 
-	newRest.ID = primitive.NewObjectID()
-	newRest.LocationId = rest.LocationId
-	newRest.Name = rest.Name
-	newRest.Latitude = rest.Latitude
-	newRest.Longitude = rest.Longitude
-	newRest.NumReviews = rest.NumReviews
-	newRest.Photo.Images.Thumbnail = models.Image(rest.Photo.Images.Thumbnail)
-	newRest.Photo.Images.Original = models.Image(rest.Photo.Images.Original)
-	newRest.Photo.Images.Medium = models.Image(rest.Photo.Images.Medium)
-	newRest.Photo.Images.Large = models.Image(rest.Photo.Images.Large)
-	newRest.Rating = rest.Rating
-	newRest.Price = rest.Price
-	newRest.Address = rest.Address
-	newRest.Phone = rest.Phone
-	newRest.Website = rest.Website
-	newRest.RawRanking = rest.RawRanking
-	newRest.RankingGeo = rest.RankingGeo
-	newRest.RankingPosition = rest.RankingPosition
-	newRest.RankingDenominator = rest.RankingDenominator
-	newRest.RankingCategory = rest.RankingCategory
-	newRest.Ranking = rest.Ranking
-	newRest.PriceLevel = rest.PriceLevel
-	newRest.SubCategory = newSubCategory
-	newRest.LocationID = loc.LocationId
-	newRest.LocationObjectID = loc.ID
-	newRest.CreatedAt = time.Now()
+	newRest := models.Restaurant{
+		ID:         primitive.NewObjectID(),
+		LocationId: rest.LocationId,
+		Name:       rest.Name,
+		Latitude:   rest.Latitude,
+		Longitude:  rest.Longitude,
+		NumReviews: rest.NumReviews,
+		Photo: models.Photo{
+			Images: models.Images{
+				Thumbnail: models.Image(rest.Photo.Images.Thumbnail),
+				Original:  models.Image(rest.Photo.Images.Original),
+				Medium:    models.Image(rest.Photo.Images.Medium),
+				Large:     models.Image(rest.Photo.Images.Thumbnail),
+			},
+		},
+		Rating:             rest.Rating,
+		Price:              rest.Price,
+		Address:            rest.Address,
+		Phone:              rest.Phone,
+		Website:            rest.Website,
+		RawRanking:         rest.RawRanking,
+		RankingGeo:         rest.RankingGeo,
+		RankingPosition:    rest.RankingPosition,
+		RankingDenominator: rest.RankingDenominator,
+		RankingCategory:    rest.RankingCategory,
+		Ranking:            rest.Ranking,
+		PriceLevel:         rest.PriceLevel,
+		SubCategory:        newSubCategory,
+		LocationID:         loc.LocationId,
+		LocationObjectID:   loc.ID,
+		CreatedAt:          time.Now(),
+	}
 
 	crs, err := db.Collection("restaurant").InsertOne(ctx, newRest)
 	if err != nil {
@@ -114,11 +119,9 @@ func InsertRestaurant(db *mongo.Database, loc models.Location, rest api.Restaura
 	}
 
 	log.Println("Insert restaurant success -", crs.InsertedID)
-
-	return nil
 }
 
-func InsertRestaurants(db *mongo.Database, loc models.Location) error {
+func InsertRestaurants(db *mongo.Database, loc models.Location) {
 	url := api.LocationUrl + loc.LocationId + "/restaurants"
 
 	for {
@@ -132,16 +135,13 @@ func InsertRestaurants(db *mongo.Database, loc models.Location) error {
 		pag := res.Paging
 
 		for _, rest := range rests {
-			exist, _ := RestaurantExist(db, rest.LocationId)
+			exist := RestaurantExist(db, rest.LocationId)
 			if exist == true {
 				log.Println("Restaurant with id", rest.LocationId, "is already exist")
 				continue
 			}
 
-			err = InsertRestaurant(db, loc, rest)
-			if err != nil {
-				log.Fatal(err.Error())
-			}
+			InsertRestaurant(db, loc, rest)
 		}
 
 		if pag.Next != "" {
@@ -151,6 +151,4 @@ func InsertRestaurants(db *mongo.Database, loc models.Location) error {
 			break
 		}
 	}
-
-	return nil
 }

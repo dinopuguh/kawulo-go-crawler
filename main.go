@@ -43,10 +43,7 @@ func getRestaurants(db *mongo.Database) {
 
 	for _, loc := range locs {
 		log.Println("<--- Location ", loc.Name, "--->")
-		err := services.InsertRestaurants(db, loc)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
+		services.InsertRestaurants(db, loc)
 	}
 }
 
@@ -56,17 +53,11 @@ func getReviews(db *mongo.Database) {
 	for _, loc := range locs {
 		log.Println("<--- Location ", loc.Name, "--->")
 
-		rests, err := services.FindIndonesianRestaurants(db, loc.LocationId)
-		if err != nil {
-			log.Fatal(err)
-		}
+		rests := services.FindIndonesianRestaurants(db, loc.LocationId)
 
 		for _, rest := range rests {
 			log.Println("Restaurant ", rest.Name)
-			err = services.InsertReviews(db, rest)
-			if err != nil {
-				log.Fatal(err.Error())
-			}
+			services.InsertReviews(db, rest)
 		}
 	}
 }

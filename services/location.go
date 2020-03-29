@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func FindAllLocations(db *mongo.Database) ([]models.Location, error) {
+func FindAllLocations(db *mongo.Database) []models.Location {
 	ctx := database.Ctx
 
 	csr, err := db.Collection("location").Find(ctx, bson.M{})
@@ -30,7 +30,7 @@ func FindAllLocations(db *mongo.Database) ([]models.Location, error) {
 		result = append(result, row)
 	}
 
-	return result, nil
+	return result
 }
 
 func FindIndonesianLocations(db *mongo.Database) []models.Location {
@@ -38,6 +38,11 @@ func FindIndonesianLocations(db *mongo.Database) []models.Location {
 
 	cities := []string{
 		"Surabaya",
+		"Jakarta",
+		"Bandung",
+		"Semarang",
+		"Yogyakarta Region",
+		"Denpasar",
 		"Banda Aceh",
 		"Medan",
 		"Padang",
@@ -48,11 +53,6 @@ func FindIndonesianLocations(db *mongo.Database) []models.Location {
 		"Pangkal Pinang",
 		"Tanjung Pinang",
 		"Serang",
-		"Jakarta",
-		"Bandung",
-		"Semarang",
-		"Yogyakarta Region",
-		"Denpasar",
 		"Mataram",
 		"Kupang",
 		"Pontianak",
