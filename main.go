@@ -53,7 +53,7 @@ func getReviews(db *mongo.Database) {
 	for _, loc := range locs {
 		log.Println("<--- Location ", loc.Name, "--->")
 
-		rests := services.FindIndonesianRestaurants(db, loc.LocationId)
+		rests := services.FindRestaurantByLocId(db, loc.LocationId)
 
 		for _, rest := range rests {
 			log.Println("Restaurant ", rest.Name)

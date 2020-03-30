@@ -35,7 +35,7 @@ func FindAllRestaurants(db *mongo.Database) []models.Restaurant {
 	return result
 }
 
-func FindIndonesianRestaurants(db *mongo.Database, locId string) []models.Restaurant {
+func FindRestaurantByLocId(db *mongo.Database, locId string) []models.Restaurant {
 	ctx := database.Ctx
 
 	csr, err := db.Collection("restaurant").Find(ctx, bson.M{"locationID": locId})

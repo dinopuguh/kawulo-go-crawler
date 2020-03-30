@@ -40,7 +40,7 @@ func ReviewExist(db *mongo.Database, revId string) bool {
 
 	var result models.Review
 
-	err := db.Collection("review").FindOne(ctx, bson.D{primitive.E{Key: "id", Value: revId}}).Decode(&result)
+	err := db.Collection("review").FindOne(ctx, bson.D{{Key: "id", Value: revId}}).Decode(&result)
 	if err != nil {
 		return false
 	}
