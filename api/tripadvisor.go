@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/joho/godotenv"
 )
 
 var (
@@ -47,11 +45,6 @@ type Paging struct {
 }
 
 func FetchRestaurants(url string) (RestaurantResponse, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	client := &http.Client{
 		Transport: transport,
 	}
@@ -91,11 +84,6 @@ func FetchRestaurants(url string) (RestaurantResponse, error) {
 }
 
 func FetchReviews(url string) (ReviewResponse, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	client := &http.Client{
 		Transport: transport,
 	}
