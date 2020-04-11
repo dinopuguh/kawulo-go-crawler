@@ -2,6 +2,7 @@ package services
 
 import (
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/dinopuguh/kawulo-go-crawler/api"
@@ -35,7 +36,7 @@ func FindAllReviews(db *mongo.Database) []models.Review {
 	return result
 }
 
-func ReviewExist(db *mongo.Database, revId string) bool {
+func reviewExist(db *mongo.Database, revId string) bool {
 	ctx := database.Ctx
 
 	var result models.Review
@@ -46,6 +47,17 @@ func ReviewExist(db *mongo.Database, revId string) bool {
 	}
 
 	return true
+}
+
+func countReviews(db *mongo.Database, restId string) int64 {
+	ctx := database.Ctx
+
+	count, err := db.Collection("review").CountDocuments(ctx, bson.M{"location_id": restId})
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	return count
 }
 
 func InsertReview(db *mongo.Database, restId primitive.ObjectID, rev api.Review) {
@@ -79,7 +91,9 @@ func InsertReview(db *mongo.Database, restId primitive.ObjectID, rev api.Review)
 }
 
 func InsertReviews(db *mongo.Database, rest models.Restaurant) {
-	url := api.LocationUrl + rest.LocationId + "/reviews"
+	reviewCount := countReviews(db, rest.LocationId)
+
+	url := api.LocationUrl + rest.LocationId + "/reviews?offset=" + strconv.FormatInt(reviewCount, 10)
 
 	for {
 		log.Println("<--- *** --->")
@@ -90,14 +104,17 @@ func InsertReviews(db *mongo.Database, rest models.Restaurant) {
 
 		revs := res.Data
 		pag := res.Paging
+		results, err := strconv.Atoi(pag.Results)
+		if err != nil {
+			log.Panic(err.Error())
+		}
+
+		if results == 0 {
+			log.Println("all reviews in", rest.LocationId, "is already obtained", reviewCount)
+			break
+		}
 
 		for _, rev := range revs {
-			exist := ReviewExist(db, rev.ReviewId)
-			if exist == true {
-				log.Println("Review with id", rev.ReviewId, "is already exist")
-				continue
-			}
-
 			InsertReview(db, rest.ID, rev)
 			log.Println(rev.ReviewId)
 		}
