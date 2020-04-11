@@ -1,9 +1,13 @@
 FROM golang:1.14.1
 
-WORKDIR /app
+RUN mkdir -p /go/src/github.com/dinopuguh/kawulo-crawler/
+
+WORKDIR /go/src/github.com/dinopuguh/kawulo-crawler/
+
+COPY . .
+
+RUN go build -o crawler main.go
 
 EXPOSE 9090
 
-COPY crawler .
-
-CMD /app/crawler
+CMD /go/src/github.com/dinopuguh/kawulo-crawler/crawler
